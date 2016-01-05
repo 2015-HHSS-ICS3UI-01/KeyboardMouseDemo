@@ -14,6 +14,7 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.util.ArrayList;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 
@@ -43,12 +44,18 @@ public class Game extends JComponent implements KeyListener, MouseMotionListener
     int mouseY = 0;
     boolean buttonPressed = false;
     
+    // block
+    ArrayList<Rectangle> blocks = new ArrayList<>();
+    
     // another player
-    Rectangle player = new Rectangle(100,500,50,50);
+    Rectangle player = new Rectangle(100,200,50,50);
     int moveX = 0;
     int moveY = 0;
+    boolean inAir = false;
     
     int gravity = 1;
+    
+    int frameCount = 0;
     
     
     //keyboard variables
@@ -56,6 +63,8 @@ public class Game extends JComponent implements KeyListener, MouseMotionListener
     boolean down = false;
     boolean right = false;
     boolean left = false;
+    boolean jump = false;
+    boolean prevJump = false;
 
     
     // drawing of the game happens in here
@@ -68,6 +77,14 @@ public class Game extends JComponent implements KeyListener, MouseMotionListener
         g.clearRect(0, 0, WIDTH, HEIGHT);
         
         // GAME DRAWING GOES HERE 
+        g.setColor(Color.BLACK);
+        
+        // go through each block
+        for(Rectangle block: blocks){
+            // draw the block
+            g.fillRect(block.x, block.y, block.width, block.height);
+        }
+        
         g.setColor(Color.RED);
         g.fillRect(x,y,50,50);
         g.fillRect(player.x, player.y, player.width, player.height);
@@ -86,6 +103,15 @@ public class Game extends JComponent implements KeyListener, MouseMotionListener
     // In here is where all the logic for my game will go
     public void run()
     {
+        // initial things to do before game starts
+        //add blocks
+        blocks.add(new Rectangle(400,450,100,50));
+        blocks.add(new Rectangle(500,400,50,50));
+        
+        
+        // END INITIAL THINGS TO DO
+        
+        
         // Used to keep track of time used to draw and update the game
         // This is used to limit the framerate later on
         long startTime;
@@ -112,10 +138,67 @@ public class Game extends JComponent implements KeyListener, MouseMotionListener
             }else{
                 moveX = 0;
             }
+            frameCount++;
+            
+            if(frameCount >= 1){
+                // gravity pulling player down
+                moveY = moveY + gravity;
+                frameCount = 0;
+            }
+             
+            //jumping
+            // jump being pressed and not in the air
+            if(jump && !prevJump && !inAir){
+                // make a big change in y direction
+                moveY = -20;
+                inAir = true;
+            }
+            // keeps track of jump key changes
+            prevJump = jump;
             
             // move the player
             player.x = player.x + moveX;
+            player.y = player.y + moveY;
 
+            
+            // if feet of player become lower than the screen   
+            if(player.y + player.height > HEIGHT){
+                // stops the falling
+                player.y = HEIGHT - player.height;
+                moveY = 0;
+                inAir = false;
+            }
+            
+            // go through all blocks
+            for(Rectangle block: blocks){
+                // is the player hitting a block
+                if(player.intersects(block)){
+                    // get the collision rectangle
+                    Rectangle intersection = player.intersection(block);
+                    
+                    // fix the x movement
+                    if(intersection.width < intersection.height){
+                        // player on the left
+                        if(player.x < block.x){
+                            // move the player the overlap
+                            player.x = player.x - intersection.width;
+                        }else{
+                            player.x = player.x + intersection.width;
+                        }
+                    } else{ // fix the y
+                        // hit the block with my head
+                        if(player.y > block.y){
+                            player.y = player.y + intersection.height;
+                            moveY = 0;
+                        }else{
+                            player.y = player.y - intersection.height;
+                            moveY = 0;
+                            inAir = false;
+                        }
+                    }
+                }
+            }
+            
             // GAME LOGIC ENDS HERE 
             
             // update the drawing (calls paintComponent)
@@ -181,6 +264,8 @@ public class Game extends JComponent implements KeyListener, MouseMotionListener
             left = true;
         }else if(key == KeyEvent.VK_RIGHT){
             right = true;
+        }else if(key == KeyEvent.VK_SPACE){
+            jump = true;
         }
     }
 
@@ -191,6 +276,8 @@ public class Game extends JComponent implements KeyListener, MouseMotionListener
             left = false;
         }else if(key == KeyEvent.VK_RIGHT){
             right = false;
+        }else if(key == KeyEvent.VK_SPACE){
+            jump = false;
         }
     }
 
