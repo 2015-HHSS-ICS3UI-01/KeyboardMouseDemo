@@ -14,7 +14,10 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.util.ArrayList;
+import javax.imageio.ImageIO;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 
@@ -65,7 +68,21 @@ public class Game extends JComponent implements KeyListener, MouseMotionListener
     boolean left = false;
     boolean jump = false;
     boolean prevJump = false;
+    
+    BufferedImage cat = loadImage("cat.png");
+    
 
+    
+    
+    public BufferedImage loadImage(String filename){
+        BufferedImage img = null;
+        try{
+            img = ImageIO.read(new File(filename));
+        }catch(Exception e){
+            System.out.println("Error loading " + filename);
+        }
+        return img;
+    }
     
     // drawing of the game happens in here
     // we use the Graphics object, g, to perform the drawing
@@ -87,7 +104,8 @@ public class Game extends JComponent implements KeyListener, MouseMotionListener
         
         g.setColor(Color.RED);
         g.fillRect(x,y,50,50);
-        g.fillRect(player.x, player.y, player.width, player.height);
+        g.drawImage(cat, player.x, player.y, player.width, player.height, null);
+        //g.fillRect(player.x, player.y, player.width, player.height);
         
         
         if(buttonPressed){
